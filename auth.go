@@ -44,7 +44,7 @@ func initConnection(host string) error {
 }
 
 type IAuthService interface {
-	Login(username string, password string) login.LoginResponse
+	Login(username string, password string) login.Response
 	VerifyToken() gin.HandlerFunc
 	RefreshToken(rfToken string) refresh.TokenRefreshRs
 }
@@ -71,7 +71,7 @@ func SetUpBaseAuthService(host string) (IAuthService, error) {
 	}, nil
 }
 
-func (a authService) Login(username string, password string) login.LoginResponse {
+func (a authService) Login(username string, password string) login.Response {
 	cred := login.Credentials{
 		UserName: username,
 		Password: password,

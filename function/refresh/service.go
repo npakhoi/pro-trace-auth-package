@@ -9,7 +9,7 @@ import (
 )
 
 type IRefreshFunction interface {
-	ResetToken(rfToken string) TokenRefreshRs
+	ResetToken(rfToken string) Response
 }
 
 type function struct {
@@ -20,21 +20,27 @@ func NewRefreshService(host string) IRefreshFunction {
 	return function{host: host}
 }
 
-func (f function) ResetToken(rfToken string) TokenRefreshRs {
+func (f function) ResetToken(rfToken string) Response {
 	url := f.host + "/refresh-token"
 	rfTokenO := TokenRefreshRq{
 		RefreshToken: rfToken,
 	}
 	requestBody, err := json.Marshal(rfTokenO)
 	if err != nil {
-		fmt.Println("Error marshaling JSON:", err)
-		return TokenRefreshRs{}
+		return Response{
+			Data:   TokenRefreshRs{},
+			Status: http.StatusBadRequest,
+			Error:  fmt.Sprintf("Error marshaling JSON: %v", err),
+		}
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(requestBody))
 	if err != nil {
-		fmt.Println("Error creating HTTP request:", err)
-		return TokenRefreshRs{}
+		return Response{
+			Data:   TokenRefreshRs{},
+			Status: http.StatusBadRequest,
+			Error:  fmt.Sprintf("Error creating HTTP request: %v", err),
+		}
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -42,27 +48,39 @@ func (f function) ResetToken(rfToken string) TokenRefreshRs {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error sending HTTP request:", err)
-		return TokenRefreshRs{}
+		return Response{
+			Data:   TokenRefreshRs{},
+			Status: http.StatusBadRequest,
+			Error:  fmt.Sprintf("Error sending HTTP request: %v", err),
+		}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Received non-OK response:", resp.Status)
-		return TokenRefreshRs{}
+		return Response{
+			Data:   TokenRefreshRs{},
+			Status: http.StatusBadRequest,
+			Error:  fmt.Sprintf("Received non-OK response: %v", err),
+		}
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return TokenRefreshRs{}
+		return Response{
+			Data:   TokenRefreshRs{},
+			Status: http.StatusBadRequest,
+			Error:  fmt.Sprintf("Error reading response body: %v", err),
+		}
 	}
 
 	var res Response
 
 	if err := json.Unmarshal(body, &res); err != nil {
-		fmt.Println("Error parsing JSON:", err)
-		return TokenRefreshRs{}
+		return Response{
+			Data:   TokenRefreshRs{},
+			Status: http.StatusBadRequest,
+			Error:  fmt.Sprintf("Error parsing JSON: %v", err),
+		}
 	}
-	return res.Data
+	return res
 }
