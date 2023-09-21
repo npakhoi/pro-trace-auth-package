@@ -46,7 +46,7 @@ func initConnection(host string) error {
 type IAuthService interface {
 	Login(username string, password string) login.Response
 	VerifyToken() gin.HandlerFunc
-	RefreshToken(rfToken string) refresh.TokenRefreshRs
+	RefreshToken(rfToken string) refresh.Response
 }
 
 type authService struct {
@@ -83,6 +83,6 @@ func (a authService) VerifyToken() gin.HandlerFunc {
 	return a.verifyTokenFunction.VerifyToken()
 }
 
-func (a authService) RefreshToken(rfToken string) refresh.TokenRefreshRs {
+func (a authService) RefreshToken(rfToken string) refresh.Response {
 	return a.refreshService.ResetToken(rfToken)
 }
