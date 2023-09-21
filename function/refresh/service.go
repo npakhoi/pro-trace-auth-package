@@ -56,14 +56,6 @@ func (f function) ResetToken(rfToken string) Response {
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if resp.StatusCode != http.StatusOK {
-		return Response{
-			Data:   TokenRefreshRs{},
-			Status: http.StatusBadRequest,
-			Error:  fmt.Sprintf("Received non-OK response: %v", err),
-		}
-	}
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return Response{
