@@ -5,9 +5,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/npakhoi/pro-trace-auth-package/common"
-	"github.com/npakhoi/pro-trace-auth-package/function/login"
 	"github.com/npakhoi/pro-trace-auth-package/function/note"
-	"github.com/npakhoi/pro-trace-auth-package/function/refresh"
 	"github.com/npakhoi/pro-trace-auth-package/function/verify"
 	"io"
 	"net/http"
@@ -23,7 +21,6 @@ func initConnection(host string) error {
 	}
 	defer response.Body.Close()
 
-	// Check the response status code.
 	if response.StatusCode != http.StatusOK {
 		return errors.New("failed")
 	}
@@ -34,7 +31,6 @@ func initConnection(host string) error {
 	}
 
 	var res common.Response
-
 	if err = json.Unmarshal(body, &res); err != nil {
 		return err
 	} else {
@@ -44,15 +40,11 @@ func initConnection(host string) error {
 }
 
 type IAuthService interface {
-	Login(username string, password string) login.Response
 	VerifyToken() gin.HandlerFunc
-	RefreshToken(rfToken string) refresh.Response
 }
 
 type authService struct {
-	loginService        login.ILoginFunction
 	verifyTokenFunction verify.IVerifyFunction
-	refreshService      refresh.IRefreshFunction
 }
 
 func SetUpBaseAuthService(host string) (IAuthService, error) {
@@ -60,29 +52,13 @@ func SetUpBaseAuthService(host string) (IAuthService, error) {
 	if err != nil {
 		return nil, err
 	}
-	loginService := login.NewLoginService(host)
-	refreshService := refresh.NewRefreshService(host)
 	noteService := note.NewNoteFunction(host)
 	verifyTokenFunction := verify.NewVerifyFunction(noteService, secretKey)
 	return authService{
-		loginService:        loginService,
 		verifyTokenFunction: verifyTokenFunction,
-		refreshService:      refreshService,
 	}, nil
-}
-
-func (a authService) Login(username string, password string) login.Response {
-	cred := login.Credentials{
-		UserName: username,
-		Password: password,
-	}
-	return a.loginService.Login(cred)
 }
 
 func (a authService) VerifyToken() gin.HandlerFunc {
 	return a.verifyTokenFunction.VerifyToken()
-}
-
-func (a authService) RefreshToken(rfToken string) refresh.Response {
-	return a.refreshService.ResetToken(rfToken)
 }
