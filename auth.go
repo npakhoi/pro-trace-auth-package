@@ -1,4 +1,4 @@
-package baseauth
+package pro_trace_auth_package
 
 import (
 	"encoding/json"
@@ -40,14 +40,14 @@ func initConnection(host string) error {
 }
 
 type IAuthService interface {
-	VerifyToken() gin.HandlerFunc
+	VerifyTokenMiddleware() gin.HandlerFunc
 }
 
 type authService struct {
 	verifyTokenFunction verify.IVerifyFunction
 }
 
-func SetUpBaseAuthService(host string) (IAuthService, error) {
+func SetUpAuthService(host string) (IAuthService, error) {
 	err := initConnection(host)
 	if err != nil {
 		return nil, err
@@ -59,6 +59,6 @@ func SetUpBaseAuthService(host string) (IAuthService, error) {
 	}, nil
 }
 
-func (a authService) VerifyToken() gin.HandlerFunc {
+func (a authService) VerifyTokenMiddleware() gin.HandlerFunc {
 	return a.verifyTokenFunction.VerifyToken()
 }
